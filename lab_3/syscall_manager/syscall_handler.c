@@ -51,8 +51,9 @@ int syscall_handler(uint8_t *memory, int vcpufd)
         break;
     case 60: /* exit */
         printf("VM_APP - EXIT %lld\n", arg1);
-        exit(arg1);
-        break;
+        regs.rax = 0;
+        ioctl(vcpufd, KVM_SET_REGS, &regs);
+        return 0; /* Signal to stop VM execution */
     case 158: /* arch_prctl - USELESS HERE */
         break;
     case 218: /* set_tid_address - USELESS HERE */
