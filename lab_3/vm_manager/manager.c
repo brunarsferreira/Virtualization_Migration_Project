@@ -178,7 +178,7 @@ int dump_vcpu_regs(int vcpufd, FILE *fp)
         return -1;
     }
     
-    printf("DEBUG DUMP: RIP = 0x%llx, RCX = 0x%llx\n", regs.rip, regs.rcx);
+   
     
     if (fwrite(&regs, sizeof(struct kvm_regs), 1, fp) != 1)
     {
