@@ -61,6 +61,8 @@ int syscall_handler(uint8_t *memory, int vcpufd)
         break;
     case 999: /* SAVE - VM migration save operation */
         printf("VM_APP - SAVE OPERATION\n");
+        regs.rax = 0; /* Set syscall return value to 0 (success) */
+        ioctl(vcpufd, KVM_SET_REGS, &regs); /* Update registers before saving */
         return 0; /* Signal VMM to perform save and exit */
     default:
         printf("VM_APP - undefind syscall %lld\n", regs.rax);
