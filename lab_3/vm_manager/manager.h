@@ -106,6 +106,17 @@ int dump_io_requests(FILE *fp);
 /* High-level function to dump entire VM state */
 int dump_vm_state(const char *filename, uint64_t memory_size);
 
+
+/* Function prototypes for restoring VM components */
+int restore_vcpu_regs(int vcpufd, FILE *fp);
+int restore_vcpu_sregs(int vcpufd, FILE *fp);
+int restore_vcpu_fpu(int vcpufd, FILE *fp);
+int restore_guest_memory(uint8_t *memory, uint64_t size, FILE *fp);
+int restore_device_state(FILE *fp);
+int restore_io_requests(FILE *fp);
+
+/* High-level function to restore entire VM state */
+int restore_vm_state(const char *filename, uint64_t memory_size);
 /* Global variables for migration */
 extern int kvmfd, vmfd, vcpufd;
 extern struct kvm_run *run;
