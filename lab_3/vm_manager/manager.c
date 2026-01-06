@@ -152,7 +152,8 @@ int vmexit_handler(int exit_reason)
     case KVM_EXIT_INTERNAL_ERROR:
         errx(1, "KVM_EXIT_INTERNAL_ERROR: suberror = 0x%x", run->internal.suberror);
     case KVM_EXIT_SHUTDOWN:
-        return 0; /* Normal VM shutdown */
+        errx(1, "SHUTDOWN");
+        break;
     default:
         errx(1, "exit_reason = 0x%d", exit_reason);
     }
@@ -176,6 +177,8 @@ int dump_vcpu_regs(int vcpufd, FILE *fp)
         perror("KVM_GET_REGS");
         return -1;
     }
+    
+    printf("DEBUG DUMP: RIP = 0x%llx, RCX = 0x%llx\n", regs.rip, regs.rcx);
     
     if (fwrite(&regs, sizeof(struct kvm_regs), 1, fp) != 1)
     {
@@ -321,6 +324,8 @@ int restore_vcpu_regs(int vcpufd, FILE *fp)
         perror("fread regs");
         return -1;
     }
+    
+    printf("DEBUG RESTORE: RIP = 0x%llx, RCX = 0x%llx\n", regs.rip, regs.rcx);
     
     if (ioctl(vcpufd, KVM_SET_REGS, &regs) == -1)
     {
