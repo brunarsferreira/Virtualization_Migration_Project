@@ -152,8 +152,7 @@ int vmexit_handler(int exit_reason)
     case KVM_EXIT_INTERNAL_ERROR:
         errx(1, "KVM_EXIT_INTERNAL_ERROR: suberror = 0x%x", run->internal.suberror);
     case KVM_EXIT_SHUTDOWN:
-        errx(1, "SHUTDOWN");
-        break;
+        return 0; /* Normal VM shutdown */
     default:
         errx(1, "exit_reason = 0x%d", exit_reason);
     }
