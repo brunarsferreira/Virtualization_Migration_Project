@@ -308,3 +308,162 @@ int dump_vm_state(const char *filename, uint64_t memory_size)
     fclose(fp);
     return 0;
 }
+
+
+/* ========== VM Restore Functions ========== */
+
+/* Restore vCPU General Purpose Registers */
+int restore_vcpu_regs(int vcpufd, FILE *fp)
+{
+    struct kvm_regs regs;
+    
+    if (fread(&regs, sizeof(struct kvm_regs), 1, fp) != 1)
+    {
+        perror("fread regs");
+        return -1;
+    }
+    
+    if (ioctl(vcpufd, KVM_SET_REGS, &regs) == -1)
+    {
+        perror("KVM_SET_REGS");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* Restore vCPU Special Registers */
+int restore_vcpu_sregs(int vcpufd, FILE *fp)
+{
+    struct kvm_sregs sregs;
+    
+    if (fread(&sregs, sizeof(struct kvm_sregs), 1, fp) != 1)
+    {
+        perror("fread sregs");
+        return -1;
+    }
+    
+    if (ioctl(vcpufd, KVM_SET_SREGS, &sregs) == -1)
+    {
+        perror("KVM_SET_SREGS");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* Restore vCPU FPU/SSE State */
+int restore_vcpu_fpu(int vcpufd, FILE *fp)
+{
+    struct kvm_fpu fpu;
+    
+    if (fread(&fpu, sizeof(struct kvm_fpu), 1, fp) != 1)
+    {
+        perror("fread fpu");
+        return -1;
+    }
+    
+    if (ioctl(vcpufd, KVM_SET_FPU, &fpu) == -1)
+    {
+        perror("KVM_SET_FPU");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* Restore Guest Physical Memory */
+int restore_guest_memory(uint8_t *memory, uint64_t size, FILE *fp)
+{
+    if (fread(memory, 1, size, fp) != size)
+    {
+        perror("fread memory");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* Restore Device State */
+int restore_device_state(FILE *fp)
+{
+    int num_fds;
+    
+    if (fread(&num_fds, sizeof(int), 1, fp) != 1)
+    {
+        perror("fread num_fds");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* Restore Pending IO Requests */
+int restore_io_requests(FILE *fp)
+{
+    int num_ios;
+    
+    if (fread(&num_ios, sizeof(int), 1, fp) != 1)
+    {
+        perror("fread num_ios");
+        return -1;
+    }
+    
+    return 0;
+}
+
+/* High-level function to restore entire VM state */
+int restore_vm_state(const char *filename, uint64_t memory_size)
+{
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
+    {
+        perror("fopen restore");
+        return -1;
+    }
+    
+    /* Read and verify VM image header */
+    vm_image_header_t header;
+    if (fread(&header, sizeof(vm_image_header_t), 1, fp) != 1)
+    {
+        perror("fread header");
+        fclose(fp);
+        return -1;
+    }
+    
+    if (header.magic != VM_IMAGE_MAGIC)
+    {
+        fprintf(stderr, "Invalid VM image file (bad magic)\n");
+        fclose(fp);
+        return -1;
+    }
+    
+    if (header.version != VM_IMAGE_VERSION)
+    {
+        fprintf(stderr, "Unsupported VM image version\n");
+        fclose(fp);
+        return -1;
+    }
+    
+    if (header.memory_size != memory_size)
+    {
+        fprintf(stderr, "Memory size mismatch\n");
+        fclose(fp);
+        return -1;
+    }
+    
+    /* Restore all VM components */
+    if (restore_vcpu_regs(vcpufd, fp) < 0 ||
+        restore_vcpu_sregs(vcpufd, fp) < 0 ||
+        restore_vcpu_fpu(vcpufd, fp) < 0 ||
+        restore_guest_memory(memory, memory_size, fp) < 0 ||
+        restore_device_state(fp) < 0 ||
+        restore_io_requests(fp) < 0)
+    {
+        fclose(fp);
+        return -1;
+    }
+    
+    fclose(fp);
+    return 0;
+}

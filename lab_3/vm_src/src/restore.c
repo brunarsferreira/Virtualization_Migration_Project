@@ -10,13 +10,31 @@
 /* TODO */
 int main(int argc, char *argv)
 {
-    /* Crate a blank VM */
+    /* Create a blank VM */
+    create_vm();
+    create_bootstrap();
+    add_memory(VM_MEMORY_SIZE, 0);
     
-    /* Read the VM image file */
-
-    /* Update the VM state */
-
-    /* Launch the VM */
+    /* Read the VM image file and update the VM state */
+    if (restore_vm_state(VM_IMAGE_FILENAME, VM_MEMORY_SIZE) < 0)
+    {
+        fprintf(stderr, "Failed to restore VM state\n");
+        return 1;
+    }
+    
+    /* Launch the VM (resume execution) */
+    printf("VM_APP - RESTORE OPERATION\n");
+    
+    while (1)
+    {
+        if (ioctl(vcpufd, KVM_RUN, NULL) == -1)
+            err(1, "KVM_RUN");
+        else
+        {
+            if (vmexit_handler(run->exit_reason) == 0)
+                break;
+        }
+    }
     
     return 0;
 }
