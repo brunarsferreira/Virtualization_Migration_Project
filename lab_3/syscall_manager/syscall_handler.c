@@ -51,9 +51,8 @@ int syscall_handler(uint8_t *memory, int vcpufd)
         break;
     case 60: /* exit */
         printf("VM_APP - EXIT %lld\n", arg1);
-        regs.rax = 0;
-        ioctl(vcpufd, KVM_SET_REGS, &regs);
-        return 0; /* Signal to stop VM execution */
+        exit(arg1);
+        break;
     case 158: /* arch_prctl - USELESS HERE */
         break;
     case 218: /* set_tid_address - USELESS HERE */
@@ -63,6 +62,7 @@ int syscall_handler(uint8_t *memory, int vcpufd)
     case 999: /* SAVE - VM migration save operation */
         printf("VM_APP - SAVE OPERATION\n");
         regs.rax = 0; /* Set syscall return value to 0 (success) */
+        regs.rip += 1; /* Advance RIP past the HLT instruction (1 byte) */
         ioctl(vcpufd, KVM_SET_REGS, &regs); /* Update registers before saving */
         return 0; /* Signal VMM to perform save and exit */
     default:
